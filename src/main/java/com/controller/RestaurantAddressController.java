@@ -16,47 +16,51 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dto.CustomerAddressDto;
-import com.entity.CustomerAddressEntity;
-import com.entity.CustomerEntity;
-import com.repository.CustomerAddressRepository;
+import com.dto.RestaurantAddressDto;
+import com.entity.RestaurantAddressEntity;
+import com.entity.RestaurantEntity;
+import com.repository.RestaurantAddressRepository;
+import com.repository.RestaurantRepository;
 
 import jakarta.servlet.http.HttpSession;
 
 @RestController
-@RequestMapping("/api/customer_address")
-public class CustomerAddressController {
+@RequestMapping("/api/restaurant_address")
+public class RestaurantAddressController {
+
+	@Autowired
+	RestaurantAddressRepository restaurantAddressRepository;
 	
 	@Autowired
-	CustomerAddressRepository customerAddressRepository;
+	RestaurantRepository restaurantRepository;
 	
 	@PostMapping
-	public ResponseEntity<?> addAddress(@RequestBody CustomerAddressDto customerAddressDto, HttpSession session) {
+	public ResponseEntity<?> addAddress(@RequestBody RestaurantAddressDto restaurantAddressDto, HttpSession session) {
 		try {
-			CustomerEntity customer = (CustomerEntity)session.getAttribute("customer");
+			RestaurantEntity restaurant = (RestaurantEntity)session.getAttribute("restaurant");
 			
-			if(customer == null) {
+			if(restaurant == null) {
 				throw new SessionException("Session Exception");
 			}else {
-				CustomerAddressEntity customerAddress = new CustomerAddressEntity();
-			
-				customerAddress.setTitle(customerAddressDto.getTitle());
-				customerAddress.setHouseNo(customerAddressDto.getHouseNo());
-				customerAddress.setApartment(customerAddressDto.getApartment());
-				customerAddress.setStreet(customerAddressDto.getStreet());
-				customerAddress.setLandmark(customerAddressDto.getLandmark());
-				customerAddress.setCity(customerAddressDto.getCity());
-				customerAddress.setState(customerAddressDto.getState());
-				customerAddress.setPincode(customerAddressDto.getPincode());
-				customerAddress.setCustomer(customer);
+				RestaurantAddressEntity restaurantAddress = new RestaurantAddressEntity();
 				
-				customerAddressRepository.save(customerAddress);
+				restaurantAddress.setRestaurantName(restaurantAddressDto.getRestaurantName());
+				restaurantAddress.setAddress(restaurantAddressDto.getAddress());
+				restaurantAddress.setStreet(restaurantAddressDto.getStreet());
+				restaurantAddress.setLandmark(restaurantAddressDto.getLandmark());
+				restaurantAddress.setCity(restaurantAddressDto.getCity());
+				restaurantAddress.setState(restaurantAddressDto.getState());
+				restaurantAddress.setPincode(restaurantAddressDto.getPincode());
+				restaurant.setAddress(restaurantAddress);
+				
+				restaurantAddressRepository.save(restaurantAddress);
+				restaurantRepository.save(restaurant);
 				
 				return ResponseEntity.ok("Success");
 			}
 		}catch(SessionException sessionException) {
 			HashMap<String, String> error = new HashMap<>();
-			error.put("message", "Customer Id not found! Please Enter Credentials.");
+			error.put("message", "Restaurant Id not found! Please Enter Credentials.");
 			error.put("exception", sessionException.getMessage());
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
 		}catch(Exception e) {
@@ -66,9 +70,10 @@ public class CustomerAddressController {
 	
 	@GetMapping("/{addressId}")
 	public ResponseEntity<?> getAddressById(@PathVariable("addressId") Integer addressId) {
-		Optional<CustomerAddressEntity> op = customerAddressRepository.findById(addressId);
+		Optional<RestaurantAddressEntity> op = restaurantAddressRepository.findById(addressId);
 		
 		if(op.isPresent()) {
+			
 			return ResponseEntity.ok(op.get());
 		}else {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -77,10 +82,10 @@ public class CustomerAddressController {
 	
 	@DeleteMapping("/{addressId}")
 	public ResponseEntity<?> deleteAddress(@PathVariable("addressId") Integer addressId) {
-		Optional<CustomerAddressEntity> op = customerAddressRepository.findById(addressId);
+		Optional<RestaurantAddressEntity> op = restaurantAddressRepository.findById(addressId);
 		
 		if(op.isPresent()) {
-			customerAddressRepository.deleteById(addressId);
+			restaurantAddressRepository.deleteById(addressId);
 			return ResponseEntity.ok("Success");
 		}else {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -88,11 +93,11 @@ public class CustomerAddressController {
 	}
 	
 	@PutMapping("/{addressId}")
-	public ResponseEntity<?> updateAddress(@PathVariable("addressId") Integer addressId, @RequestBody CustomerAddressEntity customerAddressEntity) {
-		Optional<CustomerAddressEntity> op = customerAddressRepository.findById(addressId);
+	public ResponseEntity<?> updateAddress(@PathVariable("addressId") Integer addressId, @RequestBody RestaurantAddressEntity restaurantAddressEntity) {
+		Optional<RestaurantAddressEntity> op = restaurantAddressRepository.findById(addressId);
 		
 		if(op.isPresent()) {
-			customerAddressRepository.save(customerAddressEntity);
+			restaurantAddressRepository.save(restaurantAddressEntity);
 			return ResponseEntity.ok("Success");
 		}else {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

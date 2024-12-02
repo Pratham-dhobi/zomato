@@ -1,7 +1,6 @@
 package com.controller;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,13 +14,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dto.CustomerAddressDto;
+import com.dto.CustomerDto;
 import com.dto.LoginDto;
+import com.entity.CustomerAddressEntity;
 import com.entity.CustomerEntity;
 import com.entity.RestaurantEntity;
+import com.repository.CustomerAddressRepository;
 import com.repository.CustomerRepository;
 import com.repository.RestaurantRepository;
 import com.service.EmailService;
 import com.service.OtpService;
+
+import jakarta.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/api")
@@ -42,6 +47,9 @@ public class SessionController {
 	@Autowired
 	EmailService emailService;
 	
+	@Autowired
+	CustomerAddressRepository customerAddressRepository;
+	
 	@PostMapping("/customer")
 	public ResponseEntity<String> addCustomer(@RequestBody CustomerEntity customerEntity) {
 		customerEntity.setPassword(encoder.encode(customerEntity.getPassword()));
@@ -50,14 +58,14 @@ public class SessionController {
 	}
 	
 	@PostMapping("/restaurant")
-	public ResponseEntity<String> addRestEntity(@RequestBody RestaurantEntity restaurantEntity) {
+	public ResponseEntity<String> addRestaurant(@RequestBody RestaurantEntity restaurantEntity) {
 		restaurantEntity.setPassword(encoder.encode(restaurantEntity.getPassword()));
 		restaurantRepository.save(restaurantEntity);
 		return ResponseEntity.ok("Success");
 	}
 	
-	@PostMapping("/authenticate")
-	public ResponseEntity<?> authenticate(@RequestBody LoginDto loginDto) {
+	@PostMapping("/login")
+	public ResponseEntity<?> authenticate(@RequestBody LoginDto loginDto, HttpSession session) {
 		String role = loginDto.getRole().toLowerCase();
 		String password = loginDto.getPassword();
 		String email = loginDto.getEmail();
@@ -70,6 +78,8 @@ public class SessionController {
 					CustomerEntity customer = op.get();
 					encPwd = customer.getPassword();
 					if(encoder.matches(password, encPwd) == true && email.equals(customer.getEmail())) {
+						session.setAttribute("role", "customer");
+						session.setAttribute("customer", customer);
 						return ResponseEntity.ok("Success");
 					}else {
 						Map<String, Object> error = new HashMap<>();
@@ -88,6 +98,8 @@ public class SessionController {
 					RestaurantEntity restaurant = op1.get();
 					encPwd = restaurant.getPassword();
 					if(encoder.matches(password, encPwd) == true && email.equals(restaurant.getEmail())) {
+						session.setAttribute("role", "restaurant");
+						session.setAttribute("restaurant", restaurant);
 						return ResponseEntity.ok("Success");
 					}else {
 						Map<String, Object> error = new HashMap<>();
@@ -162,6 +174,7 @@ public class SessionController {
 					customer.setOtp("");
 					customer.setPassword(encoder.encode(password));
 					customerRepository.save(customer);
+					return ResponseEntity.ok("Success");
 				}else {
 					HashMap<String, String> error = new HashMap<>();
 					error.put("message", "OTP Unmatched");
@@ -181,6 +194,7 @@ public class SessionController {
 					restaurant.setOtp("");
 					restaurant.setPassword(encoder.encode(password));
 					restaurantRepository.save(restaurant);
+					return ResponseEntity.ok("Success");
 				}else {
 					HashMap<String, String> error = new HashMap<>();
 					error.put("message", "OTP Unmatched");
@@ -196,7 +210,11 @@ public class SessionController {
 			error.put("message", "Invalid Role.");
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 		}
-		
-		return ResponseEntity.ok("");
+	}
+	
+	@GetMapping("/logout")
+	public ResponseEntity<?> logout(HttpSession session) {
+		session.invalidate();
+		return ResponseEntity.ok("Success");
 	}
 }
