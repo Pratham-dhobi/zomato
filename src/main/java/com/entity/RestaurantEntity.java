@@ -34,6 +34,7 @@ public class RestaurantEntity {
 	@Column(nullable = false)
 	String password;
 	Boolean active = true;
+	String otp;
 	
 	@OneToOne
 	@JoinColumn(name = "addressId")

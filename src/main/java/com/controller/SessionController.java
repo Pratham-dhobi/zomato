@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,8 @@ import com.entity.CustomerEntity;
 import com.entity.RestaurantEntity;
 import com.repository.CustomerRepository;
 import com.repository.RestaurantRepository;
+import com.service.EmailService;
+import com.service.OtpService;
 
 @RestController
 @RequestMapping("/api")
@@ -32,6 +35,12 @@ public class SessionController {
 	
 	@Autowired
 	RestaurantRepository restaurantRepository;
+	
+	@Autowired
+	OtpService otpService;
+	
+	@Autowired
+	EmailService emailService;
 	
 	@PostMapping("/customer")
 	public ResponseEntity<String> addCustomer(@RequestBody CustomerEntity customerEntity) {
@@ -95,5 +104,99 @@ public class SessionController {
 				error.put("message", "Invalid Role");
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 		}
+	}
+	
+	@PostMapping("/sendotp")
+	public ResponseEntity<?> sendOtp(@RequestBody LoginDto loginDto) {
+		String email = loginDto.getEmail();
+		
+		if(loginDto.getRole().toLowerCase().equals("customer")) {
+			Optional<CustomerEntity> op = customerRepository.findByEmail(email);
+			
+			if(op.isPresent()) {
+				CustomerEntity customer = op.get();
+				String otp = otpService.generateOtp();
+				customer.setOtp(otp);
+				emailService.sendEmail(email, otp);
+				customerRepository.save(customer);
+				return ResponseEntity.status(HttpStatus.OK).build();
+			}else {
+				HashMap<String, String> error = new HashMap<>();
+				error.put("message", "Email Id not Found.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+			}
+		}else if(loginDto.getRole().toLowerCase().equals("restaurant")) {
+			Optional<RestaurantEntity> op1 = restaurantRepository.findByEmail(email);
+			
+			if(op1.isPresent()) {
+				RestaurantEntity restaurant = op1.get();
+				String otp = otpService.generateOtp();
+				restaurant.setOtp(otp);
+				emailService.sendEmail(email, otp);
+				restaurantRepository.save(restaurant);
+				return ResponseEntity.status(HttpStatus.OK).build();
+			}else {
+				HashMap<String, String> error = new HashMap<>();
+				error.put("message", "Email Id not Found.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+			}
+		}else {
+			HashMap<String, String> error = new HashMap<>();
+			error.put("message", "Invalid Role.");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+		}
+	}
+	
+	@PostMapping("/updatepassword")
+	public ResponseEntity<?> updatePassword(@RequestBody LoginDto loginDto) {
+		String email = loginDto.getEmail();
+		String otp = loginDto.getOtp();
+		String password = loginDto.getPassword();
+		
+		if(loginDto.getRole().toLowerCase().equals("customer")) {
+			Optional<CustomerEntity> op = customerRepository.findByEmail(email);
+			
+			if(op.isPresent()) {
+				CustomerEntity customer = op.get();
+				if(customer.getOtp().equals(otp)) {
+					customer.setOtp("");
+					customer.setPassword(encoder.encode(password));
+					customerRepository.save(customer);
+				}else {
+					HashMap<String, String> error = new HashMap<>();
+					error.put("message", "OTP Unmatched");
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+				}
+			}else {
+				HashMap<String, String> error = new HashMap<>();
+				error.put("message", "Email Id not Found.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+			}
+		}else if(loginDto.getRole().toLowerCase().equals("restaurant")) {
+			Optional<RestaurantEntity> op = restaurantRepository.findByEmail(email);
+			
+			if(op.isPresent()) {
+				RestaurantEntity restaurant = op.get();
+				if(restaurant.getOtp().equals(otp)) {
+					restaurant.setOtp("");
+					restaurant.setPassword(encoder.encode(password));
+					restaurantRepository.save(restaurant);
+				}else {
+					HashMap<String, String> error = new HashMap<>();
+					error.put("message", "OTP Unmatched");
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+				}
+			}else {
+				HashMap<String, String> error = new HashMap<>();
+				error.put("message", "Email Id not Found.");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+			}
+		}else {
+			HashMap<String, String> error = new HashMap<>();
+			error.put("message", "Invalid Role.");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+		}
+		
+		return ResponseEntity.ok("");
 	}
 }
