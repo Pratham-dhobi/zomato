@@ -2,14 +2,14 @@ package com.entity;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -17,25 +17,22 @@ import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "customers")
+@Table(name = "menu")
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CustomerEntity {
-
+public class MenuEntity {
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	Integer customerId;
-	String fullName;
-	@Column(unique = true, nullable = false)
-	String email;
-	@Column(nullable = false)
-	String password;
-	String birthDate;
-	String contactNumber;
-	String gender;
-	String otp;
+	Integer menuId;
+	String title;
+	Integer active = 1;
 	
-	@OneToMany(mappedBy = "customer")
+	@ManyToOne
+	@JoinColumn(name = "restaurantId")
+	RestaurantEntity restaurant;
+	
+	@OneToMany(mappedBy = "menu")
 	@JsonManagedReference
-	List<CustomerAddressEntity> customerAddresses;
+	List<MenuItemEntity> items;
 }

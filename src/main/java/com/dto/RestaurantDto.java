@@ -19,6 +19,6 @@ public class RestaurantDto {
 	String pincode;
 	String email;
 	String password;
-	Boolean active;
+	Integer active;
 	String otp;
 }
