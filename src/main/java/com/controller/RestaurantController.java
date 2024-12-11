@@ -62,4 +62,11 @@ public class RestaurantController {
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		}
 	}
+	
+	@GetMapping("/vegonly")
+	public ResponseEntity<?> getVegOnlyRestaurant(){
+		List<RestaurantEntity> veg_restaurants = restaurantRepository.findByIsVegOnly(1);
+		
+		return ResponseEntity.ok(veg_restaurants);
+	}
 }
