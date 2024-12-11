@@ -2,7 +2,6 @@ package com.entity;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Column;
@@ -36,6 +35,10 @@ public class CustomerEntity {
 	String otp;
 	
 	@OneToMany(mappedBy = "customer")
-	@JsonManagedReference
+	@JsonManagedReference("customer-address")
 	List<CustomerAddressEntity> customerAddresses;
+	
+	@OneToMany(mappedBy = "customerEntity")
+	@JsonManagedReference("customer-cart")
+	List<CartEntity> carts;
 }

@@ -2,6 +2,7 @@ package com.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Entity;
@@ -30,9 +31,14 @@ public class MenuEntity {
 	
 	@ManyToOne
 	@JoinColumn(name = "restaurantId")
+	@JsonBackReference("restaurant-menu")
 	RestaurantEntity restaurant;
 	
 	@OneToMany(mappedBy = "menu")
 	@JsonManagedReference
-	List<MenuItemEntity> items;
+	List<MenuItemEntity> menuItems;
+	
+	@OneToMany(mappedBy = "menu")
+	@JsonManagedReference("menu-cartItem")
+	List<CartItemEntity> cartItems;
 }

@@ -1,7 +1,7 @@
 package com.entity;
 
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,25 +15,31 @@ import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "customer_address")
+@Table(name = "cartItem")
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CustomerAddressEntity {
-
+public class CartItemEntity {
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	Integer addressId;
-	String title;
-	String houseNo;
-	String apartment;
-	String street;
-	String landmark;
-	String city;
-	String state;
-	String pincode;
+	Integer cartItemId;
+	
+	Integer isActive = 1;
 	
 	@ManyToOne
-	@JoinColumn(name = "customerId")
-	@JsonBackReference("customer-address")
-	CustomerEntity customer;
+	@JoinColumn(name = "cartId")
+	@JsonBackReference("cart-cartItem")
+	CartEntity cartEntity;
+	
+	@ManyToOne
+	@JoinColumn(name = "menuItemId")
+	@JsonBackReference("menuitem-cartitem")
+	MenuItemEntity menuItem;
+	
+	@ManyToOne
+	@JoinColumn(name = "menuId")
+	@JsonBackReference("menu-cartItem")
+	MenuEntity menu;
+	
+	Integer qty;
 }

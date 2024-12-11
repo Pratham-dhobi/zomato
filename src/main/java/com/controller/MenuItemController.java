@@ -86,7 +86,7 @@ public class MenuItemController {
 				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
 			}
 		}else {
-			response.put("message", "Menu ot found.");
+			response.put("message", "Menu not found.");
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
 		}
 	}
