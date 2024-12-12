@@ -41,4 +41,8 @@ public class CustomerEntity {
 	@OneToMany(mappedBy = "customerEntity")
 	@JsonManagedReference("customer-cart")
 	List<CartEntity> carts;
+	
+	@OneToMany(mappedBy = "custEntity")
+	@JsonManagedReference("customer-payment")
+	List<PaymentEntity> payments;
 }

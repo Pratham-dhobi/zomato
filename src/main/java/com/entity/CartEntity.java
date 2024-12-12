@@ -46,4 +46,8 @@ public class CartEntity {
 	
 	@ManyToMany(mappedBy = "cart")
 	List<MenuItemEntity> menuItem;
+	
+	@OneToMany(mappedBy = "cartEntt")
+	@JsonManagedReference("cart-payment")
+	List<PaymentEntity> payments;
 }
