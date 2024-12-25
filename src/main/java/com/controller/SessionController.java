@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dto.CustomerAddressDto;
-import com.dto.CustomerDto;
 import com.dto.LoginDto;
-import com.entity.CustomerAddressEntity;
 import com.entity.CustomerEntity;
 import com.entity.RestaurantEntity;
 import com.repository.CustomerAddressRepository;
@@ -25,6 +22,7 @@ import com.repository.CustomerRepository;
 import com.repository.RestaurantRepository;
 import com.service.EmailService;
 import com.service.OtpService;
+import com.util.JwtUtility;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -50,21 +48,24 @@ public class SessionController {
 	@Autowired
 	CustomerAddressRepository customerAddressRepository;
 	
-	@PostMapping("/customer")
+	@Autowired
+	JwtUtility jwtUtility;
+	
+	@PostMapping("/public/customer")
 	public ResponseEntity<String> addCustomer(@RequestBody CustomerEntity customerEntity) {
 		customerEntity.setPassword(encoder.encode(customerEntity.getPassword()));
 		customerRepository.save(customerEntity);
 		return ResponseEntity.ok("Success");
 	}
 	
-	@PostMapping("/restaurant")
+	@PostMapping("/public/restaurant")
 	public ResponseEntity<String> addRestaurant(@RequestBody RestaurantEntity restaurantEntity) {
 		restaurantEntity.setPassword(encoder.encode(restaurantEntity.getPassword()));
 		restaurantRepository.save(restaurantEntity);
 		return ResponseEntity.ok("Success");
 	}
 	
-	@PostMapping("/login")
+	@PostMapping("/public/login")
 	public ResponseEntity<?> authenticate(@RequestBody LoginDto loginDto, HttpSession session) {
 		String role = loginDto.getRole().toLowerCase();
 		String password = loginDto.getPassword();
@@ -78,9 +79,10 @@ public class SessionController {
 					CustomerEntity customer = op.get();
 					encPwd = customer.getPassword();
 					if(encoder.matches(password, encPwd) == true && email.equals(customer.getEmail())) {
-						session.setAttribute("role", "customer");
-						session.setAttribute("customer", customer);
-						return ResponseEntity.ok("Success");
+						String token = jwtUtility.generateToken(email, role);
+						customer.setToken(token);
+						customerRepository.save(customer);
+						return ResponseEntity.ok().header("Authorization","Bearer "+token).body("Success");
 					}else {
 						Map<String, Object> error = new HashMap<>();
 						error.put("message", "Invalid Credentials for Customer.");
@@ -98,9 +100,10 @@ public class SessionController {
 					RestaurantEntity restaurant = op1.get();
 					encPwd = restaurant.getPassword();
 					if(encoder.matches(password, encPwd) == true && email.equals(restaurant.getEmail())) {
-						session.setAttribute("role", "restaurant");
-						session.setAttribute("restaurant", restaurant);
-						return ResponseEntity.ok("Success");
+						String token = jwtUtility.generateToken(email, role);
+						restaurant.setToken(token);
+						restaurantRepository.save(restaurant);
+						return ResponseEntity.ok().header("Authorization","Bearer "+token).body("Success");
 					}else {
 						Map<String, Object> error = new HashMap<>();
 						error.put("message", "Invalid Credentials for Restaurant.");
@@ -118,7 +121,7 @@ public class SessionController {
 		}
 	}
 	
-	@PostMapping("/sendotp")
+	@PostMapping("/public/sendotp")
 	public ResponseEntity<?> sendOtp(@RequestBody LoginDto loginDto) {
 		String email = loginDto.getEmail();
 		
@@ -159,7 +162,7 @@ public class SessionController {
 		}
 	}
 	
-	@PostMapping("/updatepassword")
+	@PostMapping("/public/updatepassword")
 	public ResponseEntity<?> updatePassword(@RequestBody LoginDto loginDto) {
 		String email = loginDto.getEmail();
 		String otp = loginDto.getOtp();

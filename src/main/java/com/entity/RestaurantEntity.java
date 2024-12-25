@@ -41,6 +41,7 @@ public class RestaurantEntity {
 	Integer active = 1;
 	String otp;
 	Integer isVegOnly;
+	String token;
 	
 	@OneToOne
 	@JoinColumn(name = "addressId")

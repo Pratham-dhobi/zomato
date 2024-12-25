@@ -33,6 +33,7 @@ public class CustomerEntity {
 	String contactNumber;
 	String gender;
 	String otp;
+	String token;
 	
 	@OneToMany(mappedBy = "customer")
 	@JsonManagedReference("customer-address")
