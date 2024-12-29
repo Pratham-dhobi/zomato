@@ -1,5 +1,6 @@
 package com.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -42,7 +43,7 @@ public class CartEntity {
 	
 	@OneToMany(mappedBy = "cartEntity")
 	@JsonManagedReference("cart-cartItem")
-	List<CartItemEntity> cartItem;
+	List<CartItemEntity> cartItem = new ArrayList<>();
 	
 	@ManyToMany(mappedBy = "cart")
 	List<MenuItemEntity> menuItem;

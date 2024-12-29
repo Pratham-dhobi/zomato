@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.entity.CustomerEntity;
 import com.repository.CustomerRepository;
+import com.service.CustomerService;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -27,6 +28,9 @@ public class CustomerController {
 	
 	@Autowired
 	CustomerRepository customerRepository;
+	
+	@Autowired
+	CustomerService customerService;
 	
 	@GetMapping("/{id}")
 	public ResponseEntity<?> getCustomerById(@PathVariable("id") Integer id) {
@@ -46,14 +50,8 @@ public class CustomerController {
 	
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> deleteCustomerById(@PathVariable("id") Integer id) {
-		Optional<CustomerEntity> op = customerRepository.findById(id);
-		
-		if(op.isPresent()) {
-			customerRepository.deleteById(id);
-			return ResponseEntity.ok("Success");
-		}else {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
+		HttpStatus status= customerService.softDeleteCustomer(id);
+		return ResponseEntity.status(status).build();
 	}
 	
 	@PutMapping("/{id}")

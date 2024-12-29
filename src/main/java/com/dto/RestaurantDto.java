@@ -20,5 +20,6 @@ public class RestaurantDto {
 	String email;
 	String password;
 	Integer active;
+	Integer isVegOnly;
 	String otp;
 }

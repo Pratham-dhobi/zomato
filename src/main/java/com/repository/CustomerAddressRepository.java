@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.entity.CustomerAddressEntity;
 import com.entity.CustomerEntity;
 
-import java.util.List;
 import java.util.Optional;
 
 

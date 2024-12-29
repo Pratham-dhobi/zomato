@@ -1,5 +1,7 @@
 package com.entity;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,19 +12,14 @@ import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "restaurant_address")
+@Table(name = "token_blacklist")
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RestaurantAddressEntity {
+public class TokenBlacklistEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	Integer addressId;
-	String restaurantName;
-	String address;
-	String street;
-	String landmark;
-	String city;
-	String state;
-	String pincode;
+	Integer id;
+	String token;
+	LocalDate date;
 }

@@ -34,6 +34,7 @@ public class CustomerEntity {
 	String gender;
 	String otp;
 	String token;
+	Integer isActive = 1;
 	
 	@OneToMany(mappedBy = "customer")
 	@JsonManagedReference("customer-address")

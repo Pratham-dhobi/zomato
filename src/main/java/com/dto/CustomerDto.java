@@ -16,4 +16,5 @@ public class CustomerDto {
 	String contactNumber;
 	String gender;
 	String otp;
+	Integer isActive;
 }

@@ -1,9 +1,7 @@
 package com.controller;
 
-import java.util.HashMap;
 import java.util.Optional;
 
-import org.hibernate.SessionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +20,7 @@ import com.entity.RestaurantEntity;
 import com.repository.RestaurantAddressRepository;
 import com.repository.RestaurantRepository;
 
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/restaurant_address")
@@ -35,36 +33,29 @@ public class RestaurantAddressController {
 	RestaurantRepository restaurantRepository;
 	
 	@PostMapping
-	public ResponseEntity<?> addAddress(@RequestBody RestaurantAddressDto restaurantAddressDto, HttpSession session) {
-		try {
-			RestaurantEntity restaurant = (RestaurantEntity)session.getAttribute("restaurant");
+	public ResponseEntity<?> addAddress(@RequestBody RestaurantAddressDto restaurantAddressDto, HttpServletRequest req) {
+		String email = (String) req.getAttribute("email");
+		Optional<RestaurantEntity> op = restaurantRepository.findByEmail(email);
+		
+		if(op.isPresent()) {
+			RestaurantEntity restaurant = op.get();
+			RestaurantAddressEntity restaurantAddress = new RestaurantAddressEntity();
 			
-			if(restaurant == null) {
-				throw new SessionException("Session Exception");
-			}else {
-				RestaurantAddressEntity restaurantAddress = new RestaurantAddressEntity();
-				
-				restaurantAddress.setRestaurantName(restaurantAddressDto.getRestaurantName());
-				restaurantAddress.setAddress(restaurantAddressDto.getAddress());
-				restaurantAddress.setStreet(restaurantAddressDto.getStreet());
-				restaurantAddress.setLandmark(restaurantAddressDto.getLandmark());
-				restaurantAddress.setCity(restaurantAddressDto.getCity());
-				restaurantAddress.setState(restaurantAddressDto.getState());
-				restaurantAddress.setPincode(restaurantAddressDto.getPincode());
-				restaurant.setAddress(restaurantAddress);
-				
-				restaurantAddressRepository.save(restaurantAddress);
-				restaurantRepository.save(restaurant);
-				
-				return ResponseEntity.ok("Success");
-			}
-		}catch(SessionException sessionException) {
-			HashMap<String, String> error = new HashMap<>();
-			error.put("message", "Restaurant Id not found! Please Enter Credentials.");
-			error.put("exception", sessionException.getMessage());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-		}catch(Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+			restaurantAddress.setRestaurantName(restaurantAddressDto.getRestaurantName());
+			restaurantAddress.setAddress(restaurantAddressDto.getAddress());
+			restaurantAddress.setStreet(restaurantAddressDto.getStreet());
+			restaurantAddress.setLandmark(restaurantAddressDto.getLandmark());
+			restaurantAddress.setCity(restaurantAddressDto.getCity());
+			restaurantAddress.setState(restaurantAddressDto.getState());
+			restaurantAddress.setPincode(restaurantAddressDto.getPincode());
+			restaurant.setAddress(restaurantAddress);
+			
+			restaurantAddressRepository.save(restaurantAddress);
+			restaurantRepository.save(restaurant);
+			
+			return ResponseEntity.ok("Success");
+		}else {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
 	}
 	

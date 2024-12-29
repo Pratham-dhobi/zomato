@@ -22,9 +22,10 @@ import com.repository.CustomerRepository;
 import com.repository.RestaurantRepository;
 import com.service.EmailService;
 import com.service.OtpService;
+import com.service.TokenBlacklistService;
 import com.util.JwtUtility;
 
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api")
@@ -51,6 +52,9 @@ public class SessionController {
 	@Autowired
 	JwtUtility jwtUtility;
 	
+	@Autowired
+	TokenBlacklistService tokenBlacklistService;
+	
 	@PostMapping("/public/customer")
 	public ResponseEntity<String> addCustomer(@RequestBody CustomerEntity customerEntity) {
 		customerEntity.setPassword(encoder.encode(customerEntity.getPassword()));
@@ -66,7 +70,7 @@ public class SessionController {
 	}
 	
 	@PostMapping("/public/login")
-	public ResponseEntity<?> authenticate(@RequestBody LoginDto loginDto, HttpSession session) {
+	public ResponseEntity<?> authenticate(@RequestBody LoginDto loginDto) {
 		String role = loginDto.getRole().toLowerCase();
 		String password = loginDto.getPassword();
 		String email = loginDto.getEmail();
@@ -216,8 +220,18 @@ public class SessionController {
 	}
 	
 	@GetMapping("/logout")
-	public ResponseEntity<?> logout(HttpSession session) {
-		session.invalidate();
-		return ResponseEntity.ok("Success");
+	public ResponseEntity<?> logout(HttpServletRequest req) {
+		String token = req.getHeader("Authorization");
+		String email = (String) req.getAttribute("email");
+        token = token.split(" ")[1];
+        CustomerEntity customer = customerRepository.findByEmail(email).orElse(null);
+        
+        if(customer != null) {
+        	customer.setToken(null);
+        	tokenBlacklistService.addTokenToBlacklist(token);
+        	return ResponseEntity.ok("Success");        	
+        }else {
+        	return ResponseEntity.ok("Logout Failed!");
+        }
 	}
 }

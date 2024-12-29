@@ -1,9 +1,9 @@
 package com.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
-import org.hibernate.SessionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -21,9 +21,10 @@ import com.dto.MenuDto;
 import com.entity.MenuEntity;
 import com.entity.RestaurantEntity;
 import com.repository.MenuRepository;
+import com.repository.RestaurantRepository;
 import com.service.MenuService;
 
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/menu")
@@ -35,94 +36,71 @@ public class MenuController {
 	@Autowired
 	MenuService menuService;
 	
+	@Autowired
+	RestaurantRepository restaurantRepository;
+	
 	@PostMapping
-	public ResponseEntity<?> addMenu(@RequestBody MenuDto menuDto, HttpSession session) {
+	public ResponseEntity<?> addMenu(@RequestBody MenuDto menuDto, HttpServletRequest req) {	
+		String email = (String) req.getAttribute("email");
+		Optional<RestaurantEntity> op = restaurantRepository.findByEmail(email);
 		
-		try {
-			RestaurantEntity restaurant = (RestaurantEntity)session.getAttribute("restaurant");
+		if(op.isPresent()) {
+			RestaurantEntity restaurant = op.get();
 			
-			if(restaurant == null) {
-				throw new SessionException("Session Exception");
-			}else {
-				HashMap<String, String> error = new HashMap<>();;
+			if(email.equals(restaurant.getEmail())) {
 				MenuEntity menu = new MenuEntity();
 				menu.setTitle(menuDto.getTitle());
 				menu.setRestaurant(restaurant);
 				
 				menuRepository.save(menu);
 				
-				return ResponseEntity.ok("Success");					
+				return ResponseEntity.ok("Success");												
+			}else {
+				return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 			}
-		}catch(SessionException sessionException) {
-			HashMap<String, String> error = new HashMap<>();
-			error.put("message", "Restaurant Id not found! Please Enter Credentials.");
-			error.put("exception", sessionException.getMessage());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-		}catch(Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+		}else {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("restaurant not found");
 		}
+	
 	}
 	
 	@DeleteMapping("/{menuId}")
-	public ResponseEntity<?> deleteMenuById(@PathVariable("menuId") Integer menuId, HttpSession session) {
-		try {
-			RestaurantEntity restaurant = (RestaurantEntity)session.getAttribute("restaurant");
-			
-			if(restaurant == null) {
-				throw new SessionException("Session Exception");
-			}else {
-				int status = menuService.softDeleteMenuService(menuId);
-				HashMap<String, String> message = new HashMap<>();
-				String msg = "";
-				if(status == 200) {
-					msg = "Success";
-				}else if(status == 404) {
-					msg = "Menu not Found.";
-				}
-				message.put("message", msg);
-				return ResponseEntity.status(HttpStatusCode.valueOf(status)).body(message);
-			}
-		}catch(SessionException sessionException) {
-			HashMap<String, String> error = new HashMap<>();
-			error.put("message", "Restaurant Id not found! Please Enter Credentials.");
-			error.put("exception", sessionException.getMessage());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-		}catch(Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-		}
+	public ResponseEntity<?> deleteMenuById(@PathVariable("menuId") Integer menuId) {
+		HttpStatus status = menuService.softDeleteMenuService(menuId);
+		return ResponseEntity.status(status).build();
 	}
 	
 	@PutMapping("/{menuId}")
-	public ResponseEntity<?> updateMenu(@RequestBody MenuDto menuDto, @PathVariable("menuId") Integer menuId, HttpSession session) {
-		try {
-			RestaurantEntity restaurant = (RestaurantEntity)session.getAttribute("restaurant");
-		
-			if(restaurant == null) {
-				throw new SessionException("Session Exception");
-			}else {
-				Optional<MenuEntity> op = menuRepository.findById(menuId);
+	public ResponseEntity<?> updateMenu(@RequestBody MenuDto menuDto, @PathVariable("menuId") Integer menuId) {
+		Optional<MenuEntity> op = menuRepository.findById(menuId);
+	
+		if(op.isPresent()) {
+			MenuEntity menu = op.get();
+			menu.setTitle(menuDto.getTitle());
+			menu.setActive(menuDto.getIsActive());
 			
-				if(op.isPresent()) {
-					MenuEntity menu = op.get();
-					menu.setTitle(menuDto.getTitle());
-					menu.setActive(menuDto.getIsActive());
-					
-					menuRepository.save(menu);
-					
-					return ResponseEntity.ok("Success");
-				}else {
-					HashMap<String, String> error = new HashMap<>();
-					error.put("message", "Menu Id not found!");
-					return ResponseEntity.status(HttpStatusCode.valueOf(401)).body(error);			
-				}
-			}
-		}catch(SessionException sessionException) {
+			menuRepository.save(menu);
+			
+			return ResponseEntity.ok("Success");
+		}else {
 			HashMap<String, String> error = new HashMap<>();
-			error.put("message", "Restaurant Id not found! Please Enter Credentials.");
-			error.put("exception", sessionException.getMessage());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-		}catch(Exception e) {
-			return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+			error.put("message", "Menu Id not found!");
+			return ResponseEntity.status(HttpStatusCode.valueOf(401)).body(error);			
+		}
+	}
+	
+	@GetMapping("/restaurant/{restaurantId}")
+	public ResponseEntity<?> getMenusByRestaurantId(@PathVariable("restaurantId") Integer restaurantId) {
+		Optional<RestaurantEntity> op = restaurantRepository.findById(restaurantId);
+		
+		if(op.isPresent()) {
+			RestaurantEntity restaurant = op.get();
+			List<MenuEntity> menus = menuRepository.findByRestaurant(restaurant);
+			return ResponseEntity.ok(menus);
+		}else {
+			HashMap<String, String> error = new HashMap<>();
+			error.put("message", "Restaurant Id not found!");
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
 		}
 	}
 }
